@@ -20,11 +20,11 @@ class CartItem {
 class Cart with ChangeNotifier {
   Map<String, CartItem> _items = {};
 
-  Map<String, CartItem> get item {
+  Map<String, CartItem> get items {
     return {...this._items};
   }
 
-  int get itemCount{
+  int get itemsCount{
     return this._items.length;
   }
 
