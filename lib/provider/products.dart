@@ -9,6 +9,10 @@ class Products with ChangeNotifier{
   List<Product> get items => [..._items];
   //Faz uma copia da lista. Semelhante ao unmodifiableList() do Java
 
+  int get itemsCount{
+    return this._items.length;
+  }
+
   void addProduct(Product product){
     _items.add(product);
     //Notificar os widgets interessados pela informação
