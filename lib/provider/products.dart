@@ -31,10 +31,18 @@ class Products with ChangeNotifier{
   void updateProduct(Product product){
     if(product == null || product.id == null) return;
 
-    var index = this._items.indexWhere((element) => element.id == product.id);
+    var index = this._items.indexWhere((prod) => prod.id == product.id);
 
     if(index >= 0){
       this._items[index] = product;
+      notifyListeners();
+    }
+  }
+
+  void removeProduct(String id){
+    var index = this._items.indexWhere((prod) => prod.id == id);
+    if(index >=0){
+      this._items.removeWhere((prod) => prod.id == id);
       notifyListeners();
     }
   }
