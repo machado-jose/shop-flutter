@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop/provider/product.dart';
@@ -25,6 +23,25 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (this._formData.isEmpty) {
+      final product = ModalRoute.of(context).settings.arguments as Product;
+      if (product != null) {
+        this._formData['id'] = product.id;
+        this._formData['title'] = product.title;
+        this._formData['price'] = product.price;
+        this._formData['description'] = product.description;
+        this._formData['imageUrl'] = product.imageUrl;
+
+        this._imageUrlController.text = product.imageUrl;
+      } else {
+        this._formData['price'] = '';
+      }
+    }
+  }
+
+  @override
   void dispose() {
     super.dispose();
     this._priceFocusNode.dispose();
@@ -34,7 +51,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   void updateImage() {
-    if(this._isValidImageUrl(this._imageUrlController.text)){
+    if (this._isValidImageUrl(this._imageUrlController.text)) {
       setState(() {});
     }
   }
@@ -57,6 +74,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     this._form.currentState.save();
 
     final newProduct = new Product(
+      id: this._formData['id'],
       title: this._formData['title'],
       price: this._formData['price'],
       description: this._formData['description'],
@@ -64,7 +82,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
 
     //Para trabalhar com o context fora do método build, o listen tem que ser false
-    Provider.of<Products>(context, listen: false).addProduct(newProduct);
+    final products = Provider.of<Products>(context, listen: false);
+    if (this._formData['id'] == null) {
+      products.addProduct(newProduct);
+    } else {
+      products.updateProduct(newProduct);
+    }
     Navigator.of(context).pop();
   }
 
@@ -87,6 +110,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           child: ListView(
             children: <Widget>[
               TextFormField(
+                initialValue: this._formData['title'],
                 decoration: InputDecoration(labelText: 'Título'),
                 textInputAction: TextInputAction.next,
                 onFieldSubmitted: (_) {
@@ -105,6 +129,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 },
               ),
               TextFormField(
+                initialValue: this._formData['price'].toString(),
                 decoration: InputDecoration(labelText: 'Preço'),
                 textInputAction: TextInputAction.next,
                 focusNode: this._priceFocusNode,
@@ -117,7 +142,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 },
                 onSaved: (value) =>
                     this._formData['price'] = double.parse(value),
-                validator: (value){
+                validator: (value) {
                   if (value.trim().isEmpty) {
                     return 'Informe um Preço';
                   }
@@ -129,12 +154,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 },
               ),
               TextFormField(
+                initialValue: this._formData['description'],
                 decoration: InputDecoration(labelText: 'Descrição'),
                 maxLines: 3,
                 focusNode: this._descriptionFocusNode,
                 keyboardType: TextInputType.multiline,
                 onSaved: (value) => this._formData['description'] = value,
-                validator: (value){
+                validator: (value) {
                   if (value.trim().isEmpty) {
                     return 'Informe uma Descrição';
                   }
@@ -159,9 +185,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                         this._saveForm();
                       },
                       onSaved: (value) => this._formData['imageUrl'] = value,
-                      validator: (value){
-                        if(value.trim().isEmpty) return 'Informe uma URL válida';
-                        if(!this._isValidImageUrl(value)) return 'A URL informada não é válida';
+                      validator: (value) {
+                        if (value.trim().isEmpty)
+                          return 'Informe uma URL válida';
+                        if (!this._isValidImageUrl(value))
+                          return 'A URL informada não é válida';
                         return null;
                       },
                     ),
@@ -185,9 +213,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             'Informe a URL',
                             textAlign: TextAlign.center,
                           )
-                        : FittedBox(
-                            child: Image.network(this._imageUrlController.text),
-                            fit: BoxFit.cover,
+                        : SizedBox(
+                            height: 100,
+                            width: 100,
+                            child: FittedBox(
+                              child:
+                                  Image.network(this._imageUrlController.text),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                   ),
                 ],

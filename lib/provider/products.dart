@@ -28,6 +28,16 @@ class Products with ChangeNotifier{
     notifyListeners();
   }
 
+  void updateProduct(Product product){
+    if(product == null || product.id == null) return;
+
+    var index = this._items.indexWhere((element) => element.id == product.id);
+
+    if(index >= 0){
+      this._items[index] = product;
+      notifyListeners();
+    }
+  }
   
 }
 
