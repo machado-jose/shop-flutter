@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:shop/data/dummy_data.dart';
 import './product.dart';
@@ -13,8 +15,14 @@ class Products with ChangeNotifier{
     return this._items.length;
   }
 
-  void addProduct(Product product){
-    _items.add(product);
+  void addProduct(Product newProduct){
+    _items.add(Product(
+      id: Random().nextDouble().toString(),
+      title: newProduct.title,
+      price: newProduct.price,
+      description: newProduct.description,
+      imageUrl: newProduct.imageUrl,
+    ));
     //Notificar os widgets interessados pela informação
     //Semelhante ao onSnapshot do Firebase
     notifyListeners();
