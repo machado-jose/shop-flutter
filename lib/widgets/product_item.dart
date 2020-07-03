@@ -34,7 +34,28 @@ class ProductItem extends StatelessWidget {
               icon: const Icon(Icons.delete),
               color: Theme.of(context).errorColor,
               onPressed: () {
-                Provider.of<Products>(context, listen: false).removeProduct(this.product.id);
+                showDialog(
+                    context: context,
+                    builder: (ctx) {
+                      return AlertDialog(
+                        title: Text('Excluir Produto?'),
+                        content: Text('Tem certeza?'),
+                        actions: <Widget>[
+                          FlatButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: Text('Não'),
+                          ),
+                          FlatButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: Text('Sim'),
+                          ),
+                        ],
+                      );
+                    }).then((value) {
+                  if (value)
+                    Provider.of<Products>(context, listen: false)
+                        .removeProduct(this.product.id);
+                });
               },
             ),
           ],
