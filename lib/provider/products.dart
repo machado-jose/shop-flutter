@@ -18,11 +18,10 @@ class Products with ChangeNotifier {
     return this._items.length;
   }
 
-  void addProduct(Product newProduct) {
+  Future<void> addProduct(Product newProduct) {
     // .json -> Regra do firebase realtime
-    const url = 'https://flutter-shop-bb234.firebaseio.com/products.json';
-    http
-        .post(
+    const url = 'https://flutter-shop-bb234.firebaseio.com/products';
+    return http.post(
       url,
       body: json.encode({
         'title': newProduct.title,
@@ -31,8 +30,7 @@ class Products with ChangeNotifier {
         'imageUrl': newProduct.imageUrl,
         'isFavorite': newProduct.isFavorite
       }),
-    )
-        .then((response) {
+    ).then((response) {
       _items.add(Product(
         id: json.decode(response.body)['name'],
         title: newProduct.title,
@@ -43,6 +41,8 @@ class Products with ChangeNotifier {
       //Notificar os widgets interessados pela informação
       //Semelhante ao onSnapshot do Firebase
       notifyListeners();
+    }).catchError((err){
+      throw err;
     });
   }
 
