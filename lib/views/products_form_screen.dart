@@ -69,7 +69,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         (endWithJpeg || endWithJpg || endWithPng);
   }
 
-  void _saveForm() {
+  Future<void> _saveForm() async {
     if (!this._form.currentState.validate()) return;
 
     this._form.currentState.save();
@@ -88,9 +88,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
     //Para trabalhar com o context fora do método build, o listen tem que ser false
     final products = Provider.of<Products>(context, listen: false);
+
     if (this._formData['id'] == null) {
-      products.addProduct(newProduct).catchError((err) {
-        return showDialog<Null>(
+      try {
+        await products.addProduct(newProduct);
+        Navigator.of(context).pop();
+      } catch (error) {
+        await showDialog<Null>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text('Ocorreu um Erro!'),
@@ -100,17 +104,16 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text('Ok'),
+                child: Text('Fechar'),
               ),
             ],
           ),
         );
-      }).then((_) {
+      } finally {
         setState(() {
           this._isLoading = false;
         });
-        Navigator.of(context).pop();
-      });
+      }
     } else {
       products.updateProduct(newProduct);
       setState(() {

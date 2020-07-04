@@ -1,13 +1,13 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shop/data/dummy_data.dart';
 import './product.dart';
 
 class Products with ChangeNotifier {
-  List<Product> _items = DUMMY_PRODUCTS;
+  List<Product> _items = [];
+  // .json -> Regra do firebase realtime
+  final String _url = 'https://flutter-shop-bb234.firebaseio.com/products.json';
 
   List<Product> get favoriteItems =>
       this._items.where((prod) => prod.isFavorite).toList();
@@ -18,11 +18,9 @@ class Products with ChangeNotifier {
     return this._items.length;
   }
 
-  Future<void> addProduct(Product newProduct) {
-    // .json -> Regra do firebase realtime
-    const url = 'https://flutter-shop-bb234.firebaseio.com/products';
-    return http.post(
-      url,
+  Future<void> addProduct(Product newProduct) async {
+    final response = await http.post(
+      this._url,
       body: json.encode({
         'title': newProduct.title,
         'price': newProduct.price,
@@ -30,20 +28,39 @@ class Products with ChangeNotifier {
         'imageUrl': newProduct.imageUrl,
         'isFavorite': newProduct.isFavorite
       }),
-    ).then((response) {
-      _items.add(Product(
-        id: json.decode(response.body)['name'],
-        title: newProduct.title,
-        price: newProduct.price,
-        description: newProduct.description,
-        imageUrl: newProduct.imageUrl,
-      ));
-      //Notificar os widgets interessados pela informação
-      //Semelhante ao onSnapshot do Firebase
+    );
+
+    _items.add(Product(
+      id: json.decode(response.body)['name'],
+      title: newProduct.title,
+      price: newProduct.price,
+      description: newProduct.description,
+      imageUrl: newProduct.imageUrl,
+    ));
+    //Notificar os widgets interessados pela informação
+    //Semelhante ao onSnapshot do Firebase
+    notifyListeners();
+  }
+
+  Future<void> loadProducts() async {
+    final response = await http.get(this._url);
+    Map<String, dynamic> data = json.decode(response.body);
+    this._items.clear();
+    if (data != null) {
+      data.forEach((productId, productData) {
+        this._items.add(
+              Product(
+                title: productData['title'],
+                price: productData['price'],
+                description: productData['description'],
+                imageUrl: productData['imageUrl'],
+                isFavorite: productData['isFavorite'],
+              ),
+            );
+      });
       notifyListeners();
-    }).catchError((err){
-      throw err;
-    });
+    }
+    return Future.value();
   }
 
   void updateProduct(Product product) {
