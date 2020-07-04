@@ -89,37 +89,31 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     //Para trabalhar com o context fora do método build, o listen tem que ser false
     final products = Provider.of<Products>(context, listen: false);
 
-    if (this._formData['id'] == null) {
-      try {
-        await products.addProduct(newProduct);
-        Navigator.of(context).pop();
-      } catch (error) {
-        await showDialog<Null>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text('Ocorreu um Erro!'),
-            content: Text('Não foi possível salvar o produto.'),
-            actions: <Widget>[
-              FlatButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('Fechar'),
-              ),
-            ],
-          ),
-        );
-      } finally {
-        setState(() {
-          this._isLoading = false;
-        });
-      }
-    } else {
-      products.updateProduct(newProduct);
+    try {
+      (this._formData['id'] == null)
+          ? await products.addProduct(newProduct)
+          : await products.updateProduct(newProduct);
+      Navigator.of(context).pop();
+    } catch (error) {
+      await showDialog<Null>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Ocorreu um Erro!'),
+          content: Text('Não foi possível salvar o produto.'),
+          actions: <Widget>[
+            FlatButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Fechar'),
+            ),
+          ],
+        ),
+      );
+    } finally {
       setState(() {
         this._isLoading = false;
       });
-      Navigator.of(context).pop();
     }
   }
 

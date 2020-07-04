@@ -7,7 +7,7 @@ import './product.dart';
 class Products with ChangeNotifier {
   List<Product> _items = [];
   // .json -> Regra do firebase realtime
-  final String _url = 'https://flutter-shop-bb234.firebaseio.com/products.json';
+  final String _baseUrl = 'https://flutter-shop-bb234.firebaseio.com/products';
 
   List<Product> get favoriteItems =>
       this._items.where((prod) => prod.isFavorite).toList();
@@ -20,7 +20,7 @@ class Products with ChangeNotifier {
 
   Future<void> addProduct(Product newProduct) async {
     final response = await http.post(
-      this._url,
+      '${this._baseUrl}.json',
       body: json.encode({
         'title': newProduct.title,
         'price': newProduct.price,
@@ -43,13 +43,14 @@ class Products with ChangeNotifier {
   }
 
   Future<void> loadProducts() async {
-    final response = await http.get(this._url);
+    final response = await http.get('${this._baseUrl}.json');
     Map<String, dynamic> data = json.decode(response.body);
     this._items.clear();
     if (data != null) {
       data.forEach((productId, productData) {
         this._items.add(
               Product(
+                id: productId,
                 title: productData['title'],
                 price: productData['price'],
                 description: productData['description'],
@@ -63,12 +64,22 @@ class Products with ChangeNotifier {
     return Future.value();
   }
 
-  void updateProduct(Product product) {
+  Future<void> updateProduct(Product product) async {
     if (product == null || product.id == null) return;
 
     var index = this._items.indexWhere((prod) => prod.id == product.id);
 
     if (index >= 0) {
+      
+      await http.patch(
+        '${this._baseUrl}/${product.id}.json',
+        body: json.encode({
+          'title': product.title,
+          'price': product.price,
+          'description': product.description,
+          'imageUrl': product.imageUrl,
+        }),
+      );
       this._items[index] = product;
       notifyListeners();
     }

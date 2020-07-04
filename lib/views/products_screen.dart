@@ -9,6 +9,7 @@ class ProductsScreen extends StatelessWidget {
   Future<void> _refreshProducts(BuildContext context){
     return Provider.of<Products>(context, listen: false).loadProducts();
   }
+
   @override
   Widget build(BuildContext context) {
     final productsData = Provider.of<Products>(context);
