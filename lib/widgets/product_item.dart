@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop/exceptions/http_exception.dart';
 import 'package:shop/provider/product.dart';
 import 'package:shop/provider/products.dart';
 import 'package:shop/utils/app_routes.dart';
@@ -11,6 +12,10 @@ class ProductItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Como a função que faz o tratamento de erro na remoção do produto é assincrono, o contexto
+    // não pode ser chamado para a construção de um snackbar pelo Scaffold
+    final scaffold = Scaffold.of(context);
+
     return ListTile(
       leading: CircleAvatar(
         backgroundImage: NetworkImage(this.product.imageUrl),
@@ -51,10 +56,20 @@ class ProductItem extends StatelessWidget {
                           ),
                         ],
                       );
-                    }).then((value) {
+                    }).then((value) async {
                   if (value)
-                    Provider.of<Products>(context, listen: false)
-                        .removeProduct(this.product.id);
+                    try {
+                      await Provider.of<Products>(context, listen: false)
+                          .removeProduct(this.product.id);
+                    } on HttpException catch (error) {
+                      scaffold.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            error.toString(),
+                          ),
+                        ),
+                      );
+                    }
                 });
               },
             ),

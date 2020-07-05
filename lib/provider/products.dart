@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shop/exceptions/http_exception.dart';
 import './product.dart';
 
 class Products with ChangeNotifier {
@@ -85,11 +86,22 @@ class Products with ChangeNotifier {
     }
   }
 
-  void removeProduct(String id) {
+  Future<void> removeProduct(String id) async {
     var index = this._items.indexWhere((prod) => prod.id == id);
     if (index >= 0) {
-      this._items.removeWhere((prod) => prod.id == id);
+
+      final product = this._items[index];
+      this._items.remove(product);
       notifyListeners();
+
+      final response = await http.delete('${this._baseUrl}/${product.id}.json');
+
+      if(response.statusCode >= 400){
+        this._items.insert(index, product);
+        notifyListeners();
+        throw new HttpException('Ocorreu um erro ao deletar o produto.');
+      }
+      
     }
   }
 }
