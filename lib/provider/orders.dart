@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop/provider/cart.dart';
+import 'package:shop/utils/constants.dart';
 
 class Order {
   final String id;
@@ -21,7 +21,7 @@ class Order {
 
 class Orders with ChangeNotifier {
   List<Order> _items = [];
-  final String _baseUrl = 'https://flutter-shop-bb234.firebaseio.com/orders';
+  final String _baseUrl = '${Constants.BASE_API_URL}/orders';
 
   List<Order> get items {
     return [...this._items];

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop/exceptions/http_exception.dart';
+import 'package:shop/utils/constants.dart';
 
 class Product with ChangeNotifier {
   final String id;
@@ -30,7 +31,7 @@ class Product with ChangeNotifier {
     this._toggleFavorite();
 
     final String _baseUrl =
-        'https://flutter-shop-bb234.firebaseio.com/products';
+        '${Constants.BASE_API_URL}/products';
 
     final response = await http.patch(
       '${_baseUrl}/${this.id}.json',
