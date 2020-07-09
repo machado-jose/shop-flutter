@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shop/exceptions/auth_exception.dart';
+import 'package:shop/provider/auth.dart';
 
 enum AuthMode { Signup, Login }
 
@@ -17,7 +20,25 @@ class _AuthCardState extends State<AuthCard> {
     'password': '',
   };
 
-  void _submit() {
+  void _showErrorDialog(String msg) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ocorreu um Erro!'),
+        content: Text(msg),
+        actions: <Widget>[
+          FlatButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
     if (!this._form.currentState.validate()) return;
 
     setState(() {
@@ -26,10 +47,24 @@ class _AuthCardState extends State<AuthCard> {
 
     this._form.currentState.save();
 
+    Auth auth = Provider.of<Auth>(context, listen: false);
+
     if (this._authMode == AuthMode.Signup) {
-      //Registrar
+      try {
+        await auth.signup(this._authData['email'], this._authData['password']);
+      } on AuthException catch (error) {
+        _showErrorDialog(error.toString());
+      } catch (error) {
+        _showErrorDialog('Ocorreu um erro inesperado.');
+      }
     } else {
-      //Login
+      try {
+        await auth.login(this._authData['email'], this._authData['password']);
+      } on AuthException catch (error) {
+        _showErrorDialog(error.toString());
+      } catch (error) {
+        _showErrorDialog('Ocorreu um erro inesperado.');
+      }
     }
 
     setState(() {
@@ -70,7 +105,9 @@ class _AuthCardState extends State<AuthCard> {
                 decoration: InputDecoration(labelText: 'E-mail'),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  return (value.isEmpty || !value.contains('@')) ? 'Informe um e-mail válido' : null;
+                  return (value.isEmpty || !value.contains('@'))
+                      ? 'Informe um e-mail válido'
+                      : null;
                 },
                 onSaved: (value) => this._authData['email'] = value,
               ),
@@ -79,7 +116,9 @@ class _AuthCardState extends State<AuthCard> {
                 controller: this._passwordController,
                 obscureText: true,
                 validator: (value) {
-                  return  (value.isEmpty || value.length < 5) ? 'Informe uma senha válida' : null;
+                  return (value.isEmpty || value.length < 6)
+                      ? 'Informe uma senha válida'
+                      : null;
                 },
                 onSaved: (value) => this._authData['password'] = value,
               ),

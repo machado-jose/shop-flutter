@@ -10,6 +10,10 @@ class Products with ChangeNotifier {
   List<Product> _items = [];
   // .json -> Regra do firebase realtime
   final String _baseUrl = '${Constants.BASE_API_URL}/products';
+  String _token;
+  String _userId;
+
+  Products([this._token, this._userId, this._items = const []]);
 
   List<Product> get favoriteItems =>
       this._items.where((prod) => prod.isFavorite).toList();
@@ -22,13 +26,12 @@ class Products with ChangeNotifier {
 
   Future<void> addProduct(Product newProduct) async {
     final response = await http.post(
-      '${this._baseUrl}.json',
+      '${this._baseUrl}.json?auth=${this._token}',
       body: json.encode({
         'title': newProduct.title,
         'price': newProduct.price,
         'description': newProduct.description,
         'imageUrl': newProduct.imageUrl,
-        'isFavorite': newProduct.isFavorite
       }),
     );
 
@@ -45,11 +48,16 @@ class Products with ChangeNotifier {
   }
 
   Future<void> loadProducts() async {
-    final response = await http.get('${this._baseUrl}.json');
+    final response = await http.get('${this._baseUrl}.json?auth=${this._token}');
     Map<String, dynamic> data = json.decode(response.body);
+
+    final favResponse = await http.get('${Constants.BASE_API_URL}/userFavorites/$_userId.json?auth=${this._token}');
+    final favMap = json.decode(favResponse.body);
+
     this._items.clear();
     if (data != null) {
       data.forEach((productId, productData) {
+        final isFavorite = favMap == null ? false : favMap[productId] ?? false;
         this._items.add(
               Product(
                 id: productId,
@@ -57,7 +65,7 @@ class Products with ChangeNotifier {
                 price: productData['price'],
                 description: productData['description'],
                 imageUrl: productData['imageUrl'],
-                isFavorite: productData['isFavorite'],
+                isFavorite: isFavorite,
               ),
             );
       });
@@ -74,7 +82,7 @@ class Products with ChangeNotifier {
     if (index >= 0) {
       
       await http.patch(
-        '${this._baseUrl}/${product.id}.json',
+        '${this._baseUrl}/${product.id}.json?auth=${this._token}',
         body: json.encode({
           'title': product.title,
           'price': product.price,
@@ -95,7 +103,7 @@ class Products with ChangeNotifier {
       this._items.remove(product);
       notifyListeners();
 
-      final response = await http.delete('${this._baseUrl}/${product.id}.json');
+      final response = await http.delete('${this._baseUrl}/${product.id}.json?auth=${this._token}');
 
       if(response.statusCode >= 400){
         this._items.insert(index, product);

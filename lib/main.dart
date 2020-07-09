@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop/provider/auth.dart';
 import 'package:shop/provider/cart.dart';
 import 'package:shop/provider/orders.dart';
 
 import 'package:shop/provider/products.dart';
 import 'package:shop/utils/app_routes.dart';
-import 'package:shop/views/auth_screen.dart';
+import 'package:shop/views/auth_home_screen.dart';
 import 'package:shop/views/cart_screen.dart';
 import 'package:shop/views/orders_screen.dart';
 import 'package:shop/views/products_details_screen.dart';
 import 'package:shop/views/products_form_screen.dart';
-import 'package:shop/views/products_overview_screen.dart';
 import 'package:shop/views/products_screen.dart';
 
 void main() => runApp(MyApp());
@@ -22,13 +22,18 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
+          create: (_) => Auth(),
+        ),
+        ChangeNotifierProxyProvider<Auth, Products>(
           create: (_) => Products(),
+          update: (ctx, auth, previousProducts) => Products(auth.token, auth.userId, previousProducts.items),
         ),
         ChangeNotifierProvider(
           create: (_) => Cart(),
         ),
-        ChangeNotifierProvider(
-          create: (_) => Orders(),
+        ChangeNotifierProxyProvider<Auth, Orders>(
+          create: (_) => Orders(null, null, []),
+          update: (ctx, auth, previousOrders) => Orders(auth.token, auth.userId, previousOrders.items),
         ),
       ],
       child: MaterialApp(
@@ -40,8 +45,7 @@ class MyApp extends StatelessWidget {
         ),
         //home: ProductsOverviewScreen(),
         routes: {
-          AppRoutes.AUTH: (ctx) => AuthScreen(),
-          AppRoutes.HOME: (ctx) => ProductsOverviewScreen(),
+          AppRoutes.AUTH_HOME: (ctx) => AuthOrHomeScreen(),
           AppRoutes.PRODUCT_DETAIL: (ctx) => ProductsDetailsScreen(),
           AppRoutes.CART: (ctx) => CartScreen(),
           AppRoutes.ORDERS: (ctx) => OrdersScreen(),
