@@ -10,7 +10,8 @@ class AuthCard extends StatefulWidget {
   _AuthCardState createState() => _AuthCardState();
 }
 
-class _AuthCardState extends State<AuthCard> {
+class _AuthCardState extends State<AuthCard>
+    with SingleTickerProviderStateMixin {
   final _passwordController = TextEditingController();
   AuthMode _authMode = AuthMode.Login;
   bool _isLoading = false;
@@ -19,6 +20,35 @@ class _AuthCardState extends State<AuthCard> {
     'email': '',
     'password': '',
   };
+
+  AnimationController _controller;
+  Animation<double> _opacityAnimation;
+  Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    this._controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 300),
+    );
+
+    this._opacityAnimation = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: this._controller, curve: Curves.linear),
+    );
+
+    this._slideAnimation =
+        Tween(begin: Offset(0, -1.5), end: Offset(0, 0)).animate(
+      CurvedAnimation(parent: this._controller, curve: Curves.linear),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    this._controller.dispose();
+  }
 
   void _showErrorDialog(String msg) {
     showDialog(
@@ -77,10 +107,12 @@ class _AuthCardState extends State<AuthCard> {
       setState(() {
         this._authMode = AuthMode.Signup;
       });
+      this._controller.forward();
     } else {
       setState(() {
         this._authMode = AuthMode.Login;
       });
+      this._controller.reverse();
     }
   }
 
@@ -93,7 +125,9 @@ class _AuthCardState extends State<AuthCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
       ),
-      child: Container(
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.linear,
         width: deviceSize.width * 0.75,
         height: this._authMode == AuthMode.Signup ? 400 : 310,
         padding: const EdgeInsets.all(16.0),
@@ -122,18 +156,30 @@ class _AuthCardState extends State<AuthCard> {
                 },
                 onSaved: (value) => this._authData['password'] = value,
               ),
-              if (this._authMode == AuthMode.Signup)
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Confirmar Senha'),
-                  obscureText: true,
-                  validator: this._authMode == AuthMode.Signup
-                      ? (value) {
-                          if (value != this._passwordController.text)
-                            return 'As Senhas informadas são Diferentes';
-                          return null;
-                        }
-                      : null,
+              AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                constraints: BoxConstraints(
+                  minHeight: this._authMode == AuthMode.Signup ? 60 : 0,
+                  maxHeight: this._authMode == AuthMode.Signup ? 120 : 0,
                 ),
+                child: FadeTransition(
+                  opacity: this._opacityAnimation,
+                  child: SlideTransition(
+                    position: this._slideAnimation,
+                    child: TextFormField(
+                      decoration: InputDecoration(labelText: 'Confirmar Senha'),
+                      obscureText: true,
+                      validator: this._authMode == AuthMode.Signup
+                          ? (value) {
+                              if (value != this._passwordController.text)
+                                return 'As Senhas informadas são Diferentes';
+                              return null;
+                            }
+                          : null,
+                    ),
+                  ),
+                ),
+              ),
               Spacer(),
               if (this._isLoading)
                 CircularProgressIndicator()
